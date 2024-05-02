@@ -24,7 +24,6 @@ get_metric=function(data,
                     breaks_space="",
                     breaks_time=""){
   if(is.null(metric)){metric="ACw_mean"}
-  print(head(data))
   dat=data %>%
     dplyr::mutate(x_space_n = var_space,
                   x_space   = data[[var_space]],
@@ -32,8 +31,8 @@ get_metric=function(data,
                   x_time    = data[[var_time]]) %>%
     dplyr::mutate(y_n=metric,
                   y=data[[metric]]) %>%
-    dplyr::mutate(x_space_cat=cut_spacetime(x_space,breaks_space,prefix="R"),
-                  x_time_cat =cut_spacetime(x_time,breaks_time,prefix="P",type="date")) %>%
+    dplyr::mutate(x_space_cat=cut_space(x_space,breaks_space),
+                  x_time_cat =cut_time(x_time,breaks_time)) %>%
     dplyr::arrange(x_space,x_time) %>%
     dplyr::mutate(not="") %>%
     dplyr::select(DATE, ID,

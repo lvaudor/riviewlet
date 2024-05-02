@@ -9,73 +9,123 @@
 
 library(shiny)
 function(input, output, session) {
+
+  # Define default reactive values
   r_val <- reactiveValues(
-    # By default, the complete data_raw is data_ganga
+
+    datapath="data-raw/data_ganga.csv",
     data_raw=data_raw,
     data_summary=data_summary,
     data_metric=data_metric,
-
-    # By default the data used for plotting is NULL
-    # By default, the variables are the columns in data_ganga
-    var_all=NULL,
-    ui_var_space= selectInput("var_space", "space",
-                  choices = colnames(data_raw),
-                  selected="ID"),
-
-    ui_var_time = selectInput("var_time", "time",
-                              choices = colnames(data_raw),
-                              selected="DATE"),
-
-    ui_var_y    = selectInput("metric", "metric",
+    var_y="ACw_mean",
+    time_rounding="year",
+    space_rounding=1,
+    breaks_space="",
+    breaks_time="",
+    ui_var_y    = selectInput("var_y", "Select metric",
                               choices = colnames(data_raw),
                               selected="ACw_mean"),
+    ui_time_rounding=selectInput("time_rounding",
+                                 "Aggregate in time by",
+                                 choices = "year",
+                                 selected="year"),
+    ui_space_rounding=sliderInput("space_rounding",
+                                  "Aggregate in space by",
+                                  min=1,max=50,step=1,
+                                  value=1),
+
+
     boxplot_metric=NULL,
     lineplot_metric=NULL,
     ui_facets_boxplots=NULL,
     facets_boxplots="not"
   )
-  observeEvent(c(input$file),{
-    print("Observe change of file")
-    # read the dataset and complete suggestions of var_space and var_time var with column names
-    data_raw=readr::read_csv(input$file$datapath)
-    r_val$data_raw=data_raw
-    var_space=ifelse("ID" %in% colnames(data_raw),
-                     "ID",
-                     colnames(data_raw)[1])
-    var_time =ifelse("DATE" %in% colnames(data_raw),
-                      "DATE",
-                      colnames(data_raw)[2])
-    var_y    =ifelse("ACw_mean" %in% colnames(data_raw),
-                     "ACw_mean",
-                     colnames(data_raw)[3])
-    r_val$ui_var_space=selectInput("var_space", "space",
-                                   choices = colnames(data_raw),
-                                   selected=var_space)
-    r_val$ui_var_time =selectInput("var_time", "time",
-                                   choices = colnames(data_raw),
-                                   selected=var_time)
-    r_val$ui_var_y    =selectInput("metric", "metric",
-                                   choices = colnames(data_raw),
-                                   selected=var_y)
+
+  observeEvent(c(r_val$datapath),{ print("Observe change of datapath")
+    # read the dataset and complete suggestions of var_space and var_time vars with column names
+    r_val$data_raw=readr::read_csv(r_val$datapath)
+    r_val$var_y    =ifelse("ACw_mean" %in% colnames(r_val$data_raw),"ACw_mean",colnames(r_val$data_raw)[3])
+    r_val$ui_var_y    =selectInput("var_y","Select metric",choices = colnames(r_val$data_raw), selected=r_val$var_y)
+
+    # time_rounding
+    val_time=r_val$data_raw[["DATE"]]
+    ndates=val_time %>% unique() %>% length()
+    nyears=lubridate::round_date(val_time,"year") %>% unique() %>% length()
+    if(nyears==ndates){choices_time_rounding="year"}else{choices_time_rounding=c("year","season","month")}
+    r_val$time_rounding="year"
+    r_val$ui_time_rounding=radioButtons("time_rounding",
+                                        "Aggregate in time by",
+                                        choices_time_rounding,
+                                        selected="year")
+
+    # space rounding
+    val_space=r_val$data_raw[["ID"]]
+    n=val_space %>% unique() %>% length()
+    ratio=floor(n/200)
+    if(ratio>1){value=ratio}else{value=1}
+    r_val$space_rounding=value
+    r_val$ui_space_rounding=sliderInput("space_rounding",
+                                        "Aggregate in space by",
+                                        min=1,max=ceiling(n/30),step=1,value=value)
+
+
+    r_val$data_summary=aggregate_data(data=r_val$data_raw,
+                                      time_acc=r_val$time_rounding,
+                                      space_acc=r_val$space_rounding)
 
   })
-  observeEvent(c(input$file,input$time_rounding),{
-       print("Observe change of time_rounding or space_rounding")
-       r_val$data_summary=aggregate_data(data=r_val$data_raw,
-                                         time_acc=input$time_rounding,
-                                         space_acc=input$space_rounding)
 
-     })
-  observeEvent(c(input$metric,
-                 input$breaks_space,
-                 input$breaks_time,
-                 input$var_x
+  observeEvent(input$file,{r_val$datapath=input$file$datapath})
+  observeEvent(c(input$var_y),{r_val$var_y=input$var_y})
+  observeEvent(c(input$time_rounding),{r_val$time_rounding=input$time_rounding})
+  observeEvent(c(input$space_rounding),{r_val$space_rounding=input$space_rounding})
+
+  observeEvent(c(input$ok),{  print("Button OK => aggregate data in r_val$data_summary")
+    r_val$plot_coverage=NULL
+    linput=reactiveValuesToList(r_val)
+    time_rounding=get_default(linput, "time_rounding","year")
+    space_rounding=get_default(linput, "space_rounding",10)
+    r_val$data_summary=aggregate_data(data=r_val$data_raw,
+                                      time_acc=time_rounding,
+                                      space_acc=space_rounding)
+  })
+
+  observeEvent(c(input$ok),{ print("Button OK or change var_y")
+    print(r_val$var_y)
+    r_val$plot_coverage=coverage(r_val$data_summary$data_density,r_val$var_y)
+  })
+#
+
+  observeEvent(c(r_val$data_metric,
+                 input$var_x,
+                 input$color,
+                 input$scale_y,
+                 add_regression=input$add_regression),{
+    r_val$lineplot_metric=lineplot_metric(
+               dat=r_val$data_metric,
+               x=input$var_x,
+               col=input$color,
+               scale_y=input$scale_y,
+               add_regression=input$add_regression
+             )
+
+  })
+  observeEvent(c(input$go_break),{
+    r_val$breaks_space=input$breaks_space
+    r_val$breaks_time=input$breaks_time
+  })
+
+  observeEvent(c(input$var_y,
+                 r_val$breaks_space,
+                 r_val$breaks_time
                  ),{
      print("Observe change of metric or breaks_space or breaks_time")
+      print(r_val$var_y)
       r_val$data_metric=get_metric(data=r_val$data_summary$data_aggregated,
-                                   metric=input$metric,
+                                   metric=r_val$var_y,
                                    breaks_space=input$breaks_space,
                                    breaks_time=input$breaks_time)
+      print("pouet")
     # if there are breaks in time maybe facet according to time periods
     # if there are breaks in space maybe facet according to spatial regions
     if(input$var_x=="x_space" & input$breaks_time!=""){
@@ -92,6 +142,7 @@ function(input, output, session) {
     }
   })
   observeEvent(input$facets_boxplots,{
+    print("Observe change in choice of facetting boxplots")
     r_val$facets_boxplots=input$facets_boxplots
   })
   observeEvent(c(r_val$data_metric,
@@ -100,51 +151,31 @@ function(input, output, session) {
                  input$scale_y,
                  input$add_means,
                  r_val$facets_boxplots),{
-                 r_val$boxplot_metric=boxplot_metric(
-                   dat=r_val$data_metric,
-                   x=input$var_x,
-                   fill=input$color,
-                   scale_y=input$scale_y,
-                   add_means=input$add_means,
-                   facets=r_val$facets_boxplots
-                   )
+    print("Observe any change that should update boxplots")
+
+     r_val$boxplot_metric=boxplot_metric(
+       dat=r_val$data_metric,
+       x=input$var_x,
+       fill=input$color,
+       scale_y=input$scale_y,
+       add_means=input$add_means,
+       facets=r_val$facets_boxplots
+       )
   })
-  observeEvent(c(r_val$data_metric,
-                 input$var_x,
-                 input$color,
-                 input$scale_y,
-                 add_regression=input$add_regression),{
-                   r_val$lineplot_metric=lineplot_metric(
-                     dat=r_val$data_metric,
-                     x=input$var_x,
-                     col=input$color,
-                     scale_y=input$scale_y,
-                     add_regression=input$add_regression
-                   )
-                 }  )
-  output$ui_var_space <- renderUI({r_val$ui_var_space})
-  output$ui_var_time <- renderUI({r_val$ui_var_time})
+
+
   output$ui_var_y <- renderUI({r_val$ui_var_y})
-  output$boxplot_metric <- renderPlot({
-    print("boxplot_metric")
-    r_val$boxplot_metric
-  },height=500)
-  output$lineplot_metric <- renderPlot({
-    print("lineplot_metric")
-    r_val$lineplot_metric
-  },height=500)
-  output$ui_facets_boxplots <- renderUI({
-    print("ui_facets_boxplots")
-    r_val$ui_facets_boxplots
-  })
+  output$ui_space_rounding <- renderUI({r_val$ui_space_rounding})
+  output$ui_time_rounding <- renderUI({r_val$ui_time_rounding})
+  output$boxplot_metric <- renderPlot({r_val$boxplot_metric},height=500)
+  output$lineplot_metric <- renderPlot({r_val$lineplot_metric},height=500)
+  output$ui_facets_boxplots <- renderUI({ r_val$ui_facets_boxplots})
   output$plot_slopes<- renderPlot({
-    print("plot_slopes")
     dat_slopes=get_slopes(r_val$data_metric,y_trans=input$scale_y)
     plot_slopes(dat_slopes,seg=TRUE)
   },height=500)
-  output$coverage <- renderPlot({
-    print("coverage")
-    coverage(r_val$data_summary$data_density,input$metric)
+  output$plot_coverage <- renderPlot({
+    r_val$plot_coverage
   })
 
 

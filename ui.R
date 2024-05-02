@@ -2,88 +2,105 @@ library(shiny)
 
 # Define UI for application that draws a histogram
 fluidPage(
-
-fluidRow(column(width=2,
-                div(img(src="hex-riviewlet.png",height=100,width=100),
-                                   style="text-align: center;"),
-                uiOutput("ui_var_y"),
-                wellPanel(
-                  p("Define reaches and periods"),
-                  textInput("breaks_space",
-                            "spatial breaks:",
-                            "55;110"),
-                  textInput("breaks_time",
-                            "time breaks",
-                            ""),
-                  radioButtons("color",
-                               "color based on",
-                               c("x_space_cat","x_time_cat"),
-                               selected="x_space_cat")
-                ),#wellPanel
-                selectInput("var_x",
-                             "X var",
-                             choices=c("x_space","x_time"),
-                             selected="x_space"),
-                selectInput("scale_y",
-                             "Y-scale transform",
-                             choices=c("identity","sqrt","log10"),
-                             selected="identity")
-
-
-      ),#left-side column
-      column(width=10,
-             tabsetPanel(
-               tabPanel("data",
-                        # BEGIN DATA FLUIDROW
-                        fluidRow(column(width=2,
-                                        fileInput("file", "Charger un fichier CSV",
-                                                  accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
-                                 column(width=2,
-                                        uiOutput("ui_var_space")),
-                                 column(width=2,
-                                        uiOutput("ui_var_time")),
-                                 column(width=2,
-                                        radioButtons("time_rounding",
-                                                     "aggregate in time by",
-                                                     c("year","season","month"),
-                                                     selected="year")),
-                                 column(width=2,
-                                        sliderInput("space_rounding",
-                                                    "aggregate in space by",
-                                                    min=1,max=100,step=1,value=20
-                                                    ))
-                        ),
-                        # END DATA FLUIDROW
-                        plotOutput("coverage")),
-               tabPanel("lineplots",
-                        fluidRow(
-                          column(width=3,
-                                 checkboxInput("add_regression",
-                                               "add regression line",
-                                               value=FALSE)
-                          )
-                        ),#fluidRow on width 10
-                        plotOutput("lineplot_metric")
-                        ),
-               tabPanel("boxplots",
-                        fluidRow(
-                          column(width=2,offset=1,
-                                 checkboxInput("add_means",
-                                               "add means",
-                                               value=TRUE)
-                          ),
-                          column(width=3,
-                                 uiOutput("ui_facets_boxplots")
-                          )
-                        ),#fluidRow on width 10
-                        plotOutput("boxplot_metric")
-               ),#tabPanel
-               tabPanel("time changes",
-                        plotOutput("plot_slopes"))
-             )#tabsetPanel
-
-            )#column
-
-)#fluidRow 1
+ tabsetPanel(
+   tabPanel("data",
+            fluidRow(column(width=1,
+                            br(),
+                            div(img(src="hex-riviewlet.png",height=100,width=100),
+                                style="text-align: center;")),
+                     column(width=2,
+                            h4("File"),
+                            fileInput("file", "Upload a CSV file",
+                                      accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
+                     column(width=2,
+                            h4("Metric"),
+                            uiOutput("ui_var_y")),
+                     column(width=2,
+                            h4("Space"),
+                            uiOutput("ui_space_rounding")),
+                     column(width=2,
+                            h4("Time"),
+                            uiOutput("ui_time_rounding")),
+                     column(width=2,
+                            br(),br(),br(),
+                            actionButton("ok", "Read and Aggregate"))
+            ),#fluidrow
+            fluidRow(column(width=2,offset=1,
+                            p("This file should be a .csv file, with the first row containing the column names.",style = "font-size: 10px;")),
+                     column(width=2,offset=2,
+                            p("Column defining space in file should be named 'ID'",
+                              style = "font-size: 10px;")),
+                     column(width=2,
+                            p("Column defining space in file should be named 'DATE' and be formatted as such (yyyy-mm-dd)",
+                              style = "font-size: 10px;")),
+                     column(width=2,
+                            p("Once you have set the parameters, you can go ahead and aggregate the data.",
+                              style = "font-size: 10px;"))
+            ),#fluidRow
+            plotOutput("plot_coverage")
+            ),
+    tabPanel("plots",
+             fluidRow(
+             column(width=2,
+                    selectInput("var_x",
+                                "X var",
+                                choices=c("x_space","x_time"),
+                                selected="x_space"),
+                    selectInput("scale_y",
+                                "Y-scale transform",
+                                choices=c("identity","sqrt","log10"),
+                                selected="identity"),
+                    radioButtons("color",
+                                 "color based on",
+                                 c("x_space_cat","x_time_cat"),
+                                 selected="x_space_cat"),
+                    wellPanel(
+                      h4("Define time periods and spatial segments"),
+                      textInput("breaks_space",
+                                "spatial breaks:",
+                                ""),
+                      p("For example '55;110'",
+                        style = "font-size: 10px;"),
+                      textInput("breaks_time",
+                                "time breaks",
+                                ""),
+                      p("For example '2000-07-01'",
+                        style = "font-size: 10px;"),
+                      actionButton("go_break","go")
+                    )#wellPanel
+                    ),#column
+            column(width=10,
+                    tabsetPanel(id="tabset_which_plot",
+                        tabPanel("lineplots",
+                                fluidRow(
+                                  column(width=3,
+                                         checkboxInput("add_regression",
+                                                       "add regression line",
+                                                       value=FALSE)
+                                  )
+                                ),#fluidRow on width 10
+                                plotOutput("lineplot_metric")
+                                ),
+                       tabPanel("boxplots",
+                                fluidRow(
+                                  column(width=2,offset=1,
+                                         checkboxInput("add_means",
+                                                       "add means",
+                                                       value=TRUE)
+                                  ),
+                                  column(width=3,
+                                         uiOutput("ui_facets_boxplots")
+                                  )
+                                ),#fluidRow on width 10
+                                plotOutput("boxplot_metric")
+                       ),#tabPanel
+                       tabPanel("time changes",
+                                plotOutput("plot_slopes"))
+                     )#tabsetPanel 2
+            ) #column
+            ) # fluidRow
+    )#tabPanel
+ )#tabsetPanel 1
 )#fluidPage
+#
 

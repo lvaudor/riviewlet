@@ -16,7 +16,7 @@ a tibble containing variables x, metric (name) and value, and possibly xcat
 Get and format raw data from datapath
 }
 \examples{
-data=readr::read_csv("data/data_ganga.csv")
+data=readr::read_csv("data-raw/data_ganga.csv")
 data=aggregate_data(data, time_acc="year")
-coverage(data$data_density, "MEAN_VEGETATION_MNDWI")
+coverage(data$data_density, "ACw_mean")
 }

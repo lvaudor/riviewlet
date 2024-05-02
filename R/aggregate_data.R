@@ -9,7 +9,8 @@
 #' data=readr::read_csv("data-raw/data_Lhassa.csv")
 #' dat=aggregate_data(data, time_acc="year")
 
-aggregate_data=function(data,time_acc="year",space_acc=10){
+aggregate_data=function(data,
+                        time_acc="year",space_acc=10){
   N=function(x){return(length(which(!is.na(x))))}
   my_mean=function(x){return(mean(x,na.rm=T))}
   data=data %>%
