@@ -5,6 +5,7 @@
 #' @return a data table with slopes
 calc_slope=function(datDGO,y_trans="identity"){
   f_trans=get(y_trans)
+  if(nrow(na.omit(datDGO))<2){return(NA)}
   reg_mod=lm(f_trans(y)~DATE,data=datDGO)
   slope=coef(reg_mod)[2]
   return(slope)

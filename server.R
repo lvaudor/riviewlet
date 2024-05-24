@@ -13,7 +13,7 @@ function(input, output, session) {
   # Define default reactive values
   r_val <- reactiveValues(
 
-    datapath="data-raw/data_ganga.csv",
+    datapath="data-raw/riviewlet_data/data_ganga.csv",
     data_raw=data_raw,
     data_summary=data_summary,
     data_metric=data_metric,
@@ -91,7 +91,6 @@ function(input, output, session) {
   })
 
   observeEvent(c(input$ok),{ print("Button OK or change var_y")
-    print(r_val$var_y)
     r_val$plot_coverage=coverage(r_val$data_summary$data_density,r_val$var_y)
   })
 #
@@ -116,16 +115,18 @@ function(input, output, session) {
   })
 
   observeEvent(c(input$var_y,
+                 r_val$data_summary,
                  r_val$breaks_space,
                  r_val$breaks_time
                  ),{
      print("Observe change of metric or breaks_space or breaks_time")
       print(r_val$var_y)
+      print(dim(r_val$data_summary$data_aggregated))
       r_val$data_metric=get_metric(data=r_val$data_summary$data_aggregated,
                                    metric=r_val$var_y,
                                    breaks_space=input$breaks_space,
                                    breaks_time=input$breaks_time)
-      print("pouet")
+      print(dim(r_val$data_metric))
     # if there are breaks in time maybe facet according to time periods
     # if there are breaks in space maybe facet according to spatial regions
     if(input$var_x=="x_space" & input$breaks_time!=""){
