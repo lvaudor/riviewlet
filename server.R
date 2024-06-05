@@ -12,7 +12,6 @@ function(input, output, session) {
 
   # Define default reactive values
   r_val <- reactiveValues(
-
     datapath="data-raw/riviewlet_data/data_ganga.csv",
     data_raw=data_raw,
     data_summary=data_summary,

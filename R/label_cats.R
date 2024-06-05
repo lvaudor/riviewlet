@@ -14,12 +14,11 @@ label_cats=function(dat,x){
     dplyr::arrange(x) %>%
     dplyr::pull(x) %>%
     unique()
-  x_cats_labels=x_cats
-  if(length(x_cats)>10){
-    x_cats_labels=rep("",length(x_cats))
-    x_cats_labels=rep("",length(x_cats))
+  if(x=="x_time"){x_cats=format(x_cats,"%Y-%m-%d")}
+ if(length(x_cats)>10){
     seq_labels=seq(round(length(x_cats)/5,-1),length(x_cats),by=round(length(x_cats)/5,-1))
-    x_cats_labels[seq_labels]=x_cats[seq_labels]
+    x_cats_labels=x_cats
+    x_cats_labels[which(!(1:length(x_cats_labels) %in% seq_labels))]=""
   }
   return(x_cats_labels)
 }
