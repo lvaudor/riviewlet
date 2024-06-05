@@ -9,9 +9,10 @@
 #' @export
 #'
 #' @examples
-#'data=readr::read_csv("data/data_ganga.csv")
-#'dat=get_metric(data,breaks_time="1998;2007",breaks_space="60")
+#'data(data_ganga)
+#'dat=get_metric(data_ganga,breaks_time="1998;2007",breaks_space="60")
 #'boxplot_metric(dat)
+#'boxplot_metric(dat,x="x_time",facets="x_space_cat")
 #'boxplot_metric(dat,scale_y="log10", add_means=T)
 #'boxplot_metric(dat,scale_y="log10", add_means=T,facets="not")
 #'boxplot_metric(dat,scale_y="log10", fill="x_space")
