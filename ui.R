@@ -2,7 +2,7 @@ library(shiny)
 
 # Define UI for application that draws a histogram
 fluidPage(
- tabsetPanel(
+ tabsetPanel(id="data_or_plots",
    tabPanel("data",
             fluidRow(column(width=1,
                             br(),
@@ -10,7 +10,7 @@ fluidPage(
                                 style="text-align: center;")),
                      column(width=2,
                             h4("File"),
-                            fileInput("file", "Upload a CSV file",
+                            fileInput("file", "📂 Upload a CSV file",
                                       accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
                      column(width=2,
                             h4("Metric"),
@@ -50,12 +50,14 @@ fluidPage(
                                 "Y-scale transform",
                                 choices=c("identity","sqrt","log10"),
                                 selected="identity"),
-                    radioButtons("color",
-                                 "color based on",
-                                 c("x_space_cat","x_time_cat"),
-                                 selected="x_space_cat"),
+
                     wellPanel(
-                      h4("Define time periods and spatial segments"),
+                      h4("Breaks in time and space"),
+                      radioButtons("color",
+                                   "🟥🟦 color",
+                                   c("x_space_cat","x_time_cat"),
+                                   selected="x_space_cat"),
+                      h5("✂️ Define breaks"),
                       textInput("breaks_space",
                                 "spatial breaks:",
                                 ""),
@@ -72,6 +74,7 @@ fluidPage(
             column(width=10,
                     tabsetPanel(id="tabset_which_plot",
                         tabPanel("lineplots",
+                                uiOutput("ui_slider_dgos"),
                                 fluidRow(
                                   column(width=3,
                                          checkboxInput("add_regression",
@@ -94,7 +97,7 @@ fluidPage(
                                 ),#fluidRow on width 10
                                 plotOutput("boxplot_metric")
                        ),#tabPanel
-                       tabPanel("time changes",
+                       tabPanel("📈 time changes",
                                 plotOutput("plot_slopes"))
                      )#tabsetPanel 2
             ) #column
