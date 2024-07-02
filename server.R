@@ -145,9 +145,7 @@ function(input, output, session) {
                ignoreInit=TRUE,
                ignoreNULL=TRUE,{
      print("Observe change of metric or breaks_space or breaks_time")
-      print(r_val$var_y)
-      print(dim(r_val$data_summary$data_aggregated))
-      r_val$data_metric=get_metric(data=r_val$data_summary$data_aggregated,
+     r_val$data_metric=get_metric(data=r_val$data_summary$data_aggregated,
                                    metric=r_val$var_y,
                                    breaks_space=input$breaks_space,
                                    breaks_time=input$breaks_time)
@@ -174,7 +172,7 @@ function(input, output, session) {
     r_val$ui_slider_dgos
   })
 
-  observeEvent(c(input$var_x,
+  observeEvent(c(r_val$data_metric,input$var_x,
                  input$color,
                  input$scale_y,
                  input$add_regression,
@@ -182,6 +180,7 @@ function(input, output, session) {
                ignoreInit=TRUE,
                ignoreNULL=TRUE,{
                  print("Produce lineplot")
+                 print(table(r_val$data_metric$x_space_cat))
                  r_val$lineplot_metric=lineplot_metric(
                    dat=r_val$data_metric,
                    x=input$var_x,
