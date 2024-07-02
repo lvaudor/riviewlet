@@ -12,7 +12,6 @@ function(input, output, session) {
 
   # Define default reactive values
   r_val <- reactiveValues(
-
     datapath="data-raw/riviewlet_data/data_ganga.csv",
     data_raw=data_raw,
     data_summary=data_summary,
@@ -22,8 +21,8 @@ function(input, output, session) {
     space_rounding=1,
     breaks_space="",
     breaks_time="",
-    min_dgo=min(data_summary$ID),
-    max_dgo=max(data_summary$ID),
+    min_dgo=min_dgo,
+    max_dgo=max_dgo,
     ui_slider_dgos=sliderInput("slider_dgos",
                                "range of DGOs",
                                min=min_dgo,
@@ -41,7 +40,7 @@ function(input, output, session) {
                                  selected="year"),
     ui_space_rounding=sliderInput("space_rounding",
                                   "Aggregate in space by",
-                                  min=1,max=50,step=1,
+                                  min=1,max=5,step=1,
                                   value=1),
 
     boxplot_metric=NULL,
@@ -50,10 +49,13 @@ function(input, output, session) {
     facets_boxplots="not"
   )
 
-  observeEvent(c(r_val$datapath),{
-    print("Observe initial choice or change of datapath")
+  observeEvent(c(input$file),
+               ignoreInit=TRUE,
+               ignoreNULL=TRUE,{
+    print("Observe change of datapath")
     print("   Create data_raw")
     # read the dataset and complete suggestions of var_space and var_time vars with column names
+    r_val$datapath=input$file$datapath
     r_val$data_raw=readr::read_csv(r_val$datapath)
     print("   Create input$var_y")
     r_val$var_y    =ifelse("ACw_mean" %in% colnames(r_val$data_raw),"ACw_mean",colnames(r_val$data_raw)[3])
@@ -84,18 +86,22 @@ function(input, output, session) {
   output$ui_space_rounding <- renderUI({r_val$ui_space_rounding})
   output$ui_time_rounding <- renderUI({r_val$ui_time_rounding})
 
-  observeEvent(c(r_val$data_raw,
+  observeEvent(c(r_val$datapath,
+                 r_val$data_raw,
                  input$time_rounding,
                  input$space_rounding),
                ignoreInit=TRUE,
                ignoreNULL=TRUE,{
     print("Calculate r_val$data_summary")
+    print(r_val$datapath)
     r_val$data_summary=aggregate_data(data=r_val$data_raw,
                                       time_acc=input$time_rounding,
                                       space_acc=input$space_rounding)
 
   })
-  observeEvent(r_val$data_summary,{
+  observeEvent(r_val$data_summary,
+               ignoreInit=TRUE,
+               ignoreNULL=TRUE,{
     print("Update ui_slider_dgos")
     r_val$min_dgo=min(r_val$data_summary$data_aggregated$ID)
     r_val$max_dgo=max(r_val$data_summary$data_aggregated$ID)
