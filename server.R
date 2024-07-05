@@ -92,8 +92,8 @@ function(input, output, session) {
                  input$space_rounding),
                ignoreInit=TRUE,
                ignoreNULL=TRUE,{
-    print("Calculate r_val$data_summary")
-    print(r_val$datapath)
+    print("Calculate r_val$data_summary for datafile:")
+    print(input$file)
     r_val$data_summary=aggregate_data(data=r_val$data_raw,
                                       time_acc=input$time_rounding,
                                       space_acc=input$space_rounding)
@@ -137,7 +137,7 @@ function(input, output, session) {
   })
 
 
-  observeEvent(c(input$var_y,
+  observeEvent(c(r_val$var_y,
                  r_val$data_summary,
                  r_val$breaks_space,
                  r_val$breaks_time
@@ -172,7 +172,8 @@ function(input, output, session) {
     r_val$ui_slider_dgos
   })
 
-  observeEvent(c(r_val$data_metric,input$var_x,
+  observeEvent(c(r_val$data_metric,
+                 input$var_x,
                  input$color,
                  input$scale_y,
                  input$add_regression,
@@ -233,7 +234,20 @@ function(input, output, session) {
   },height=500)
 
 
-
+  output$map <- leaflet::renderLeaflet({
+    print("produce map")
+    if("geometry" %in% colnames(r_val$data_raw)){
+      data_map=r_val$data_raw %>%
+        dplyr::select(ID,geometry) %>%
+        unique() %>%
+        na.omit() %>%
+        sf::st_as_sf(wkt="geometry",na.fail=FALSE)
+      map=leaflet::leaflet(data=data_map) %>%
+        leaflet::addProviderTiles(provider="OpenStreetMap.Mapnik") %>%
+        leaflet::addCircleMarkers(weight=0.1, opacity=0.5)
+    }else{map=NULL}
+    map
+  })
 
 
 }

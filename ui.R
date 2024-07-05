@@ -37,7 +37,8 @@ fluidPage(
                             p("Once you have set the parameters, you can go ahead and aggregate the data.",
                               style = "font-size: 10px;"))
             ),#fluidRow
-            plotOutput("plot_coverage")
+            plotOutput("plot_coverage"),
+            plotOutput("map")
             ),
     tabPanel("plots",
              fluidRow(
