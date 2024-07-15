@@ -12,37 +12,19 @@ function(input, output, session) {
 
   # Define default reactive values
   r_val <- reactiveValues(
-    datapath="data-raw/riviewlet_data/data_ganga.csv",
-    data_raw=data_raw,
-    data_summary=data_summary,
-    data_metric=data_metric,
-    var_y="ACw_mean",
-    time_rounding="year",
-    space_rounding=1,
+    datapath=NULL,
+    data_raw=NULL,
+    data_summary=NULL,
+    data_metric=NULL,
+    var_y=NULL,
     breaks_space="",
     breaks_time="",
-    min_dgo=min_dgo,
-    max_dgo=max_dgo,
-    ui_slider_dgos=sliderInput("slider_dgos",
-                               "range of DGOs",
-                               min=min_dgo,
-                               max=max_dgo,
-                               step=1,
-                               value=c(min=min_dgo,
-                                       max=max_dgo)),
-
-    ui_var_y    = selectInput("var_y", "Select metric",
-                              choices = colnames(data_raw),
-                              selected="ACw_mean"),
-    ui_time_rounding=selectInput("time_rounding",
-                                 "Aggregate in time by",
-                                 choices = "year",
-                                 selected="year"),
-    ui_space_rounding=sliderInput("space_rounding",
-                                  "Aggregate in space by",
-                                  min=1,max=5,step=1,
-                                  value=1),
-
+    min_dgo=NULL,
+    max_dgo=NULL,
+    ui_slider_dgos=NULL,
+    ui_var_y= NULL,
+    time_rounding="year",
+    space_rounding=1,
     boxplot_metric=NULL,
     lineplot_metric=NULL,
     ui_facets_boxplots=NULL,
@@ -58,8 +40,8 @@ function(input, output, session) {
     r_val$datapath=input$file$datapath
     r_val$data_raw=readr::read_csv(r_val$datapath)
     print("   Create input$var_y")
-    r_val$var_y    =ifelse("ACw_mean" %in% colnames(r_val$data_raw),"ACw_mean",colnames(r_val$data_raw)[3])
-    r_val$ui_var_y    =selectInput("var_y","Select metric",choices = colnames(r_val$data_raw), selected=r_val$var_y)
+    r_val$var_y    =colnames(r_val$data_raw)[which(!(colnames(r_val$data_raw) %in% c("ID","DATE")))]
+    r_val$ui_var_y    =selectInput("var_y","Select metric",choices = r_val$var_y, selected=r_val$var_y[1])
 
     print("   Create input$time_rounding and input$space_rounding")
     # time_rounding
@@ -86,50 +68,28 @@ function(input, output, session) {
   output$ui_space_rounding <- renderUI({r_val$ui_space_rounding})
   output$ui_time_rounding <- renderUI({r_val$ui_time_rounding})
 
-  observeEvent(c(r_val$datapath,
-                 r_val$data_raw,
-                 input$time_rounding,
+  observeEvent(c(input$time_rounding,
                  input$space_rounding),
                ignoreInit=TRUE,
                ignoreNULL=TRUE,{
     print("Calculate r_val$data_summary for datafile:")
-    print(input$file)
     r_val$data_summary=aggregate_data(data=r_val$data_raw,
                                       time_acc=input$time_rounding,
                                       space_acc=input$space_rounding)
 
   })
-  observeEvent(r_val$data_summary,
-               ignoreInit=TRUE,
-               ignoreNULL=TRUE,{
-    print("Update ui_slider_dgos")
-    r_val$min_dgo=min(r_val$data_summary$data_aggregated$ID)
-    r_val$max_dgo=max(r_val$data_summary$data_aggregated$ID)
-    r_val$ui_slider_dgos=sliderInput("slider_dgos",
-                                     "range of DGOs",
-                                     min=r_val$min_dgo,
-                                     max=r_val$max_dgo,
-                                     step=1,
-                                     value=c(min=r_val$min_dgo,
-                                             max=r_val$max_dgo))
-  })
-
   observeEvent(c(input$slider_dgos,ignoreInit=TRUE,ignoreNULL=TRUE),{
     r_val$min_dgo=input$slider_dgos[1]
     r_val$max_dgo=input$slider_dgos[2]
   })
   # If OK or change y metric, show data coverage
-  observeEvent(c(input$ok,r_val$var_y),
-               ignoreInit=TRUE,{
+  observeEvent(c(input$var_y,
+                 input$time_rounding,
+                 input$space_rounding),
+               ignoreInit=TRUE,
+               ignoreNULL=TRUE,{
     print("Prepare data coverage")
-    r_val$plot_coverage=NULL
-    linput=reactiveValuesToList(r_val)
-    time_rounding=get_default(linput, "time_rounding","year")
-    space_rounding=get_default(linput, "space_rounding",10)
-    r_val$data_summary=aggregate_data(data=r_val$data_raw,
-                                      time_acc=time_rounding,
-                                      space_acc=space_rounding)
-    r_val$plot_coverage=coverage(r_val$data_summary$data_density,r_val$var_y)
+    r_val$plot_coverage=coverage(r_val$data_summary$data_density,input$var_y)
 
   })
   output$plot_coverage <- renderPlot({
@@ -137,7 +97,7 @@ function(input, output, session) {
   })
 
 
-  observeEvent(c(r_val$var_y,
+  observeEvent(c(input$var_y,
                  r_val$data_summary,
                  r_val$breaks_space,
                  r_val$breaks_time
@@ -146,7 +106,7 @@ function(input, output, session) {
                ignoreNULL=TRUE,{
      print("Observe change of metric or breaks_space or breaks_time")
      r_val$data_metric=get_metric(data=r_val$data_summary$data_aggregated,
-                                   metric=r_val$var_y,
+                                   metric=input$var_y,
                                    breaks_space=input$breaks_space,
                                    breaks_time=input$breaks_time)
 
@@ -166,7 +126,26 @@ function(input, output, session) {
     }
   })
 
+  observeEvent(r_val$data_summary,
+               ignoreInit=TRUE,
+               ignoreNULL=TRUE,{
+   print("Update ui_slider_dgos")
+   r_val$min_dgo=min(r_val$data_summary$data_aggregated$ID)
+   r_val$max_dgo=max(r_val$data_summary$data_aggregated$ID)
+   r_val$ui_slider_dgos=sliderInput("slider_dgos",
+                                    "range_of DGOs",
+                                    min=r_val$min_dgo,
+                                    max=r_val$max_dgo,
+                                    step=1,
+                                    value=c(min=r_val$min_dgo,max=r_val$max_dgo))
 
+  })
+  observeEvent(c(input$ŝlider_dgos,
+                 ignoreInit=TRUE,
+                 ignoreNULL=TRUE),{
+  r_val$min_dgo=input$slider_dgos[1]
+  r_val$max_dgo=input$slider_dgos[2]
+  })
   output$ui_slider_dgos <- renderUI({
     print("Produce slider")
     r_val$ui_slider_dgos
@@ -236,12 +215,14 @@ function(input, output, session) {
 
   output$map <- leaflet::renderLeaflet({
     print("produce map")
+    print(colnames(r_val$data_raw))
     if("geometry" %in% colnames(r_val$data_raw)){
       data_map=r_val$data_raw %>%
         dplyr::select(ID,geometry) %>%
         unique() %>%
         na.omit() %>%
-        sf::st_as_sf(wkt="geometry",na.fail=FALSE)
+        sf::st_as_sf(wkt="geometry",na.fail=FALSE) %>%
+        sf::st_set_crs(4326)
       map=leaflet::leaflet(data=data_map) %>%
         leaflet::addProviderTiles(provider="OpenStreetMap.Mapnik") %>%
         leaflet::addCircleMarkers(weight=0.1, opacity=0.5)

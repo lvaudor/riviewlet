@@ -12,7 +12,7 @@ fluidPage(
                             h4("File"),
                             fileInput("file", "📂 Upload a CSV file",
                                       accept = c("text/csv", "text/comma-separated-values,text/plain", ".csv"))),
-                     column(width=2,
+                     column(width=4,
                             h4("Metric"),
                             uiOutput("ui_var_y")),
                      column(width=2,
@@ -20,25 +20,22 @@ fluidPage(
                             uiOutput("ui_space_rounding")),
                      column(width=2,
                             h4("Time"),
-                            uiOutput("ui_time_rounding")),
-                     column(width=2,
-                            br(),br(),br(),
-                            actionButton("ok", "Read and Aggregate"))
+                            uiOutput("ui_time_rounding"))
             ),#fluidrow
             fluidRow(column(width=2,offset=1,
                             p("This file should be a .csv file, with the first row containing the column names.",style = "font-size: 10px;")),
-                     column(width=2,offset=2,
-                            p("Column defining space in file should be named 'ID'",
+                     column(width=4,
+                            p("Choose the metric you want to examine.",
+                              style="font-size: 10px;")),
+                     column(width=2,
+                            p("Named 'ID' in .csv file.",
                               style = "font-size: 10px;")),
                      column(width=2,
-                            p("Column defining space in file should be named 'DATE' and be formatted as such (yyyy-mm-dd)",
+                            p("Named 'DATE' (formatted as yyyy-mm-dd) in .csv file.",
                               style = "font-size: 10px;")),
-                     column(width=2,
-                            p("Once you have set the parameters, you can go ahead and aggregate the data.",
-                              style = "font-size: 10px;"))
             ),#fluidRow
             plotOutput("plot_coverage"),
-            plotOutput("map")
+            leaflet::leafletOutput("map")
             ),
     tabPanel("plots",
              fluidRow(
