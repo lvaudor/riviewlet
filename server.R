@@ -17,6 +17,8 @@ function(input, output, session) {
     data_summary=NULL,
     data_metric=NULL,
     var_y=NULL,
+    time_rounding="year",
+    space_rounding=1,
     breaks_space="",
     breaks_time="",
     min_dgo=NULL,
@@ -82,6 +84,7 @@ function(input, output, session) {
     r_val$min_dgo=input$slider_dgos[1]
     r_val$max_dgo=input$slider_dgos[2]
   })
+
   # If OK or change y metric, show data coverage
   observeEvent(c(input$var_y,
                  input$time_rounding,
@@ -105,6 +108,7 @@ function(input, output, session) {
                ignoreInit=TRUE,
                ignoreNULL=TRUE,{
      print("Observe change of metric or breaks_space or breaks_time")
+                 print(input$var_y)
      r_val$data_metric=get_metric(data=r_val$data_summary$data_aggregated,
                                    metric=input$var_y,
                                    breaks_space=input$breaks_space,
@@ -138,9 +142,8 @@ function(input, output, session) {
                                     max=r_val$max_dgo,
                                     step=1,
                                     value=c(min=r_val$min_dgo,max=r_val$max_dgo))
-
   })
-  observeEvent(c(input$ŝlider_dgos,
+  observeEvent(c(input$slider_dgos,
                  ignoreInit=TRUE,
                  ignoreNULL=TRUE),{
   r_val$min_dgo=input$slider_dgos[1]

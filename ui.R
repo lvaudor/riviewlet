@@ -25,14 +25,14 @@ fluidPage(
             fluidRow(column(width=2,offset=1,
                             p("This file should be a .csv file, with the first row containing the column names.",style = "font-size: 10px;")),
                      column(width=4,
-                            p("Choose the metric you want to examine.",
+                            p("Metrics' names (first row of .csv file).",
                               style="font-size: 10px;")),
                      column(width=2,
                             p("Named 'ID' in .csv file.",
                               style = "font-size: 10px;")),
                      column(width=2,
                             p("Named 'DATE' (formatted as yyyy-mm-dd) in .csv file.",
-                              style = "font-size: 10px;")),
+                              style = "font-size: 10px;"))
             ),#fluidRow
             plotOutput("plot_coverage"),
             leaflet::leafletOutput("map")
