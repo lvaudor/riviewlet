@@ -26,6 +26,7 @@ lineplot_metric=function(dat,
                          add_regression=FALSE,
                          x_space_min=min(dat$x_space),
                          x_space_max=max(dat$x_space)){
+  print(head(dat))
   x_cats_labels=label_cats(dat,x)
   if(x=="x_space"){facets="x_time"}
   if(x=="x_time"){facets="x_space"}
@@ -45,7 +46,7 @@ lineplot_metric=function(dat,
     ggplot2::facet_wrap(facets=ggplot2::vars({{facets}}))
 
    if(add_regression){
-     p=p+ggplot2::stat_smooth(geom="line",method="lm",alpha=0.5,lwd=2, linetype=3)
-   }
+     p=p+ggplot2::stat_smooth(geom="line",method="lm",alpha=0.5,lwd=2, alpha=0.5)
+  }
   return(p)
 }

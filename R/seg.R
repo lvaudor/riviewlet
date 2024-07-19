@@ -64,26 +64,37 @@ define_segments=function(x,segcrit="mean",pen.value="2*log(n)"){
 #' Title
 #'
 #' @param data
-#' @param segcrit
+#' @param z the variable based on which to segment
+#' @param segcrit the criterion used for segmenting (can be "mean","var", or "meanvar"). Defaults to "mean".
 #' @param pen.value
-#'
 #' @return
 #' @export
-#'
 #' @examples
-calc_table=function(data,segcrit="mean",pen.value="log(n)"){
-  tib=data %>%
-    dplyr::mutate(measured=dplyr::case_when(is.na(y)~FALSE,
-                              !is.na(y)~TRUE)) %>%
-    dplyr::mutate(y=replace_NA(y)) %>%
-    dplyr::mutate(seg=define_segments(y,
-                               segcrit=segcrit,
-                               pen.value=pen.value)) %>%
+#' data(data_ganga)
+#' data_metric=get_metric(data_ganga,metric="ACw_mean")
+#' data_slopes=get_slopes(data_metric,y_trans="log10")
+#' calc_table(data_slopes,z="slope")
+calc_table=function(data,
+                    z,
+                    segcrit="mean",pen.value="log(n)"){
+  z=rlang::sym(z)
+  data=data %>%
+    dplyr::mutate(zseg={{z}})
+  z=rlang::sym(z)
+  data=data %>%
+    dplyr::mutate(z={{z}}) %>%
+    dplyr::mutate(measured=dplyr::case_when(is.na(z)~FALSE,
+                              !is.na(z)~TRUE)) %>%
+    dplyr::mutate(z=replace_NA(z)) %>%
+    dplyr::mutate(seg=define_segments(z,
+                                      segcrit=segcrit,
+                                      pen.value=pen.value)) %>%
     dplyr::group_by(seg) %>%
-    dplyr::mutate(ymean=mean(y),
-           ysd=sd(y)) %>%
-    dplyr::mutate(yup=ymean+2*ysd,
-           ylo=ymean-2*ysd) %>%
-    dplyr::ungroup()
-  return(tib)
+    dplyr::mutate(zmean=mean(z),
+           zsd=sd(z)) %>%
+    dplyr::mutate(zup=zmean+2*zsd,
+           zlo=zmean-2*zsd) %>%
+    dplyr::ungroup() %>%
+    dplyr::select(-z)
+  return(data)
 }
