@@ -211,8 +211,10 @@ function(input, output, session) {
   output$lineplot_metric <- renderPlot({r_val$lineplot_metric},height=500)
   output$ui_facets_boxplots <- renderUI({ r_val$ui_facets_boxplots})
   output$plot_slopes<- renderPlot({
-    dat_slopes=get_slopes(r_val$data_metric,y_trans=input$scale_y)
-    plot_slopes(dat_slopes,seg=TRUE)
+    data_slopes=get_slopes(r_val$data_metric,
+                           x=input$var_x,
+                           y_trans=input$scale_y)
+    plot_slopes(data_slopes,seg=TRUE)
   },height=500)
 
 

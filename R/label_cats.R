@@ -19,6 +19,6 @@ label_cats=function(dat,x){
     seq_labels=seq(round(length(x_cats)/5,-1),length(x_cats),by=round(length(x_cats)/5,-1))
     x_cats_labels=x_cats
     x_cats_labels[which(!(1:length(x_cats_labels) %in% seq_labels))]=""
-  }
+  }else{x_cats_labels=x_cats}
   return(x_cats_labels)
 }

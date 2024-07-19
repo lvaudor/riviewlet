@@ -95,7 +95,7 @@ fluidPage(
                                 ),#fluidRow on width 10
                                 plotOutput("boxplot_metric")
                        ),#tabPanel
-                       tabPanel("📈 time changes",
+                       tabPanel("🔀 changes",
                                 plotOutput("plot_slopes"))
                      )#tabsetPanel 2
             ) #column
